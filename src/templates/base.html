@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <style type="text/css">
+      form button { margin: 5px 0px; }
+        textarea { display: block; margin-bottom: 10px; }
+        /*post*/
+        .post { border: 1px solid #ccc; margin-top: 10px; }
+        /*comments*/
+        .comments-section { margin-top: 10px; border: 1px solid #ccc; }
+        .comment { margin-bottom: 10px; }
+        .comment .comment-name { font-weight: bold; }
+        .comment .comment-date {
+          font-style: italic;
+          font-size: 0.8em;
+        }
+        .comment .reply-btn, .edit-btn { font-size: 0.8em; }
+        .comment-details { width: 91.5%; float: left; }
+        .comment-details p { margin-bottom: 0px; }
+        .comment .profile_pic {
+          width: 35px;
+          height: 35px;
+          margin-right: 5px;
+          float: left;
+          border-radius: 50%;
+        }
+        /*replies*/
+        .reply { margin-left: 30px; }
+        .reply_form {
+          margin-left: 40px;
+          display: none;
+        }
+        #comment_form { margin-top: 10px; }
+    </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel='stylesheet' href="">
+    <title>Base Template</title>
+    {% include 'css.html' %}
+    {% block base_head %}{% endblock %}
+  </head>
+  <body>
+    <div class='container'>
+      {% block content %}{% endblock %}
+    </div>
+    {% include 'js.html' %}
+    <script type="text/javascript">
+      $(document).ready(function(){
+        var replyForm=$(".reply-form")
+        replyForm.css("display","none")
+        var clearFix = $(".formsub")
+        clearFix.submit(function(event){
+          var thisFix=$(this)
+          var actionUrl=thisFix.attr("action")
+          event.preventDefault()
+          $.ajax({
+            url:actionUrl,
+            data: thisFix.serialize(),
+            method:"POST",
+            success: function(data){
+              var text="";
+              var len=data.result.length
+              var commentDetail=$('.comment-details')
+              var i
+              var commentDetailFor=$('.comment-detail-for')
+              for(i=0;i<len;i++)
+              {
+                text+=data.result[i]['body']
+              }
+              commentDetailFor.html("<div class='comment-toggle'>"+text+"</div>") 
+           }
+          })
+        })
+        $('.comment-detail-for').css("style","none")
+        var commentDet=$(".comment-details")
+        var commentForm=$(".indiviual")
+        commentDet.click(function(event){
+            commentForm.submit(function(){
+              event.preventDefault()
+            })
+            actionUrl=commentForm.attr("action")
+            $.ajax({
+            url:actionUrl,
+            data:commentForm.serialize(),
+            method:"POST",
+            success:function(data){
+              event.preventDefault()
+              console.log(data.result)
+              var text=""
+              var len=data.result[0].length
+              var i
+              var commentDetailFor=$('.comment-detail-for')
+              for(i=0;i<len;i++)
+              {
+                text+="<div class='container'><div class='row'><div class='col-lg-8'><div class='comment-class btn btn-success'><a style='font-weight: bold;color: black;' href=''>"+data.result[1][i]+"</a>:<b>"+data.result[0][i]['body']+"</b></div><div><div class='reply-replies' style='display:inline-block;font-weight: bold;color: black;'>Replies<form method='POST' action='/replyall' class='reply-form'><input type='hidden' name='comment_id' value='"+data.result[0][i]['id']+"'><input type='hidden' name='user_id' value='"+data.result[0][i]['user_id']+"'></form><div class='attach'></div></div>                         <div  class='reply-replys' style='display:inline-block; font-weight: bold;'>Reply<form class='reply-main-form' style='display:none;' action='/reply'><input type='hidden' name='comment_id' value='"+data.result[0][i]['id']+"'><input type='text' name='reply_content'><input type='hidden' name='current_user' value='{{current_user.id}}'><button type='submit' class='btn btn-primary'>Submit</button></form></div>             </div></div></div></div>"
+              }
+              if(event.target !== event.currentTarget) return; 
+              commentDetailFor.html("<div class='comment-toggle'>"+text+"</div>")
+              var done=$(".attach")
+              done.css("display","none")
+              commentDetailFor.toggle()
+              var replyReplys=$(".reply-replys")
+              replyReplys.click(function(event){
+                  if(event.target !== event.currentTarget) return;
+                  event.preventDefault()
+                  var thisForm=$(this)
+                  var formSub=thisForm.children()
+                  formSub.toggle()
+                  formSub.submit(function(event){
+                    event.preventDefault()
+                    var replyFromUrl=formSub.attr("action")
+                    $.ajax({
+                        url:replyFromUrl,
+                        data:formSub.serialize(),
+                        method:"POST",
+                        success:function(data){
+                          var replyReplies=thisForm.prev()
+                          var len=data.result.length
+                          var i
+                          var commit=""
+                          commit="<li class='tog'><a href=''>"+data.result[1]+"</a>:"+data.result[0]['body']+"</li>"
+                          replyReplies.find(".attach").append(commit)
+                          replyReplies.find(".attach").css("display","block")
+                        }
+                    })
+                  })
+              })
+              var replyToggle =$(".reply-replies")
+              replyToggle.click(function(event){
+                event.preventDefault()
+                var thisToggle=$(this)
+                var replyFormReply=thisToggle.find(".reply-form")
+                var actionReply=replyFormReply.attr("action")
+                console.log(actionReply)
+                $.ajax({
+                    url:actionReply,
+                    data:replyFormReply.serialize(),
+                    method:"POST",
+                    success:function(data){
+                      console.log(data.result)
+                      var i
+                      var replyFormAll=""
+                      var len=data.result[0].length
+                      for(i=0;i<len;i++)
+                      {
+                        replyFormAll+="<li class='tog'><a href=''>"+data.result[1][i]+"</a>:"+data.result[0][i]['body']+"</li>"
+                      }
+                      var toglr=thisToggle.find(".attach")
+                      toglr.html(replyFormAll)
+                      toglr.toggle()
+                    }
+                })
+              })
+           }
+          })
+        })
+      })
+    </script>
+  </body>
+</html>

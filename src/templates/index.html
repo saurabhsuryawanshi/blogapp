@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+	<div class="container">
+		<div class="row">
+			{% for obj in result %}
+				<div class="col-3">
+					<a href='detail/{{obj.id}}'>{{obj.title}}</a>
+				</div>
+			{% endfor %}
+		</div>
+		<div class="container">
+			<div class="row">
+				<div class="col-6">
+					<form class="clearfix" action="/list" method="POST" id="comment_form">
+						<h4>Add a post:</h4>
+						<input type="hidden" name="user_id" value="{{ current_user.id }}">
+						<label for="title">Title</label>
+						<input type="text" id="title" name="title"><br><br>
+						<textarea name="post_content" id="comment_text" class="form-control" cols="30" rows="3"></textarea>
+						<button type="submit" class="btn btn-primary btn-sm pull-right" id="submit_comment">Submit comment</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
